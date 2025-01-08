@@ -8,12 +8,24 @@ services:
         source: /data/coolify/source/.env
         target: /var/www/html/.env
         read_only: true
-      - /data/coolify/ssh:/var/www/html/storage/app/ssh
-      - /data/coolify/applications:/var/www/html/storage/app/applications
-      - /data/coolify/databases:/var/www/html/storage/app/databases
-      - /data/coolify/services:/var/www/html/storage/app/services
-      - /data/coolify/backups:/var/www/html/storage/app/backups
-      - /data/coolify/webhooks-during-maintenance:/var/www/html/storage/app/webhooks-during-maintenance
+      - type: bind
+        source: /data/coolify/ssh
+        target: /var/www/html/storage/app/ssh
+      - type: bind
+        source: /data/coolify/applications
+        target: /var/www/html/storage/app/applications
+      - type: bind
+        source: /data/coolify/databases
+        target: /var/www/html/storage/app/databases
+      - type: bind
+        source: /data/coolify/services
+        target: /var/www/html/storage/app/services
+      - type: bind
+        source: /data/coolify/backups
+        target: /var/www/html/storage/app/backups
+      - type: bind
+        source: /data/coolify/webhooks-during-maintenance
+        target: /var/www/html/storage/app/webhooks-during-maintenance
     environment:
       - APP_ENV=production
       - APP_NAME
@@ -73,9 +85,11 @@ services:
         condition: service_healthy
 
   postgres:
-    image: postgres:17.2  # Użyj konkretnej wersji PostgreSQL
+    image: postgres:17.2
     volumes:
-      - coolify-db:/var/lib/postgresql/data
+      - type: volume
+        source: coolify-db
+        target: /var/lib/postgresql/data
     environment:
       POSTGRES_USER: "${DB_USERNAME}"
       POSTGRES_PASSWORD: "${DB_PASSWORD}"
@@ -87,17 +101,19 @@ services:
       timeout: 2s
 
   redis:
-  image: redis:7.4.2-alpine  # Użyj stabilnej wersji Redis
-  command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD}
-  environment:
-    REDIS_PASSWORD: "${REDIS_PASSWORD}"
-  volumes:
-    - coolify-redis:/data
-  healthcheck:
-    test: redis-cli ping
-    interval: 5s
-    retries: 10
-    timeout: 2s
+    image: redis:7.4.2-alpine
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD}
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+    volumes:
+      - type: volume
+        source: coolify-redis
+        target: /data
+    healthcheck:
+      test: redis-cli ping
+      interval: 5s
+      retries: 10
+      timeout: 2s
 
   soketi:
     image: 'ghcr.io/coollabsio/coolify-realtime:1.0.5'
@@ -105,7 +121,9 @@ services:
       - "${SOKETI_PORT:-6001}:6001"
       - "6002:6002"
     volumes:
-      - /data/coolify/ssh:/var/www/html/storage/app/ssh
+      - type: bind
+        source: /data/coolify/ssh
+        target: /var/www/html/storage/app/ssh
     environment:
       APP_NAME: "${APP_NAME:-Coolify}"
       SOKETI_DEBUG: "${SOKETI_DEBUG:-false}"
