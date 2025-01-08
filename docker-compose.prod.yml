@@ -1,6 +1,8 @@
+version: '3.8'
+
 services:
   coolify:
-    image: "ghcr.io/coollabsio/coolify:${LATEST_IMAGE:-latest}"
+    image: "ghcr.io/coollabsio/coolify:latest"
     volumes:
       - type: bind
         source: /data/coolify/source/.env
@@ -69,7 +71,9 @@ services:
         condition: service_healthy
       soketi:
         condition: service_healthy
+
   postgres:
+    image: postgres:17.2  # Użyj konkretnej wersji PostgreSQL
     volumes:
       - coolify-db:/var/lib/postgresql/data
     environment:
@@ -81,17 +85,20 @@ services:
       interval: 5s
       retries: 10
       timeout: 2s
+
   redis:
-    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD}
-    environment:
-      REDIS_PASSWORD: "${REDIS_PASSWORD}"
-    volumes:
-      - coolify-redis:/data
-    healthcheck:
-      test: redis-cli ping
-      interval: 5s
-      retries: 10
-      timeout: 2s
+  image: redis:7.4.2-alpine  # Użyj stabilnej wersji Redis
+  command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD}
+  environment:
+    REDIS_PASSWORD: "${REDIS_PASSWORD}"
+  volumes:
+    - coolify-redis:/data
+  healthcheck:
+    test: redis-cli ping
+    interval: 5s
+    retries: 10
+    timeout: 2s
+
   soketi:
     image: 'ghcr.io/coollabsio/coolify-realtime:1.0.5'
     ports:
