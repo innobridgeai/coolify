@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   coolify:
     image: "ghcr.io/coollabsio/coolify:latest"
@@ -142,6 +140,7 @@ volumes:
   coolify-redis:
     name: coolify-redis
 
+# The external network 'coolify' is defined. Ensure that it exists and is properly configured.
 networks:
   coolify:
     external: true
